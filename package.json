@@ -1,0 +1,41 @@
+{
+  "name": "@searchcode/core",
+  "description": "HTTP client for the searchcode.ai API — search the source code of the public web, identify site technologies, and map operators.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "searchcode.ai <hello@searchcode.ai>",
+  "homepage": "https://searchcode.ai/docs/",
+  "keywords": [
+    "searchcode",
+    "source-code-search",
+    "website-technology",
+    "technology-lookup",
+    "web-intelligence",
+    "builtwith-alternative",
+    "publicwww-alternative"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/searchcode-ai/searchcode-core.git"
+  },
+  "bugs": {
+    "url": "https://github.com/searchcode-ai/searchcode-core/issues"
+  },
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}
