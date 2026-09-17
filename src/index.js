@@ -45,6 +45,7 @@ export function hintFor(code) {
     case 'RATE_LIMITED': return 'slow down; per-key rate limit hit';
     case 'MISSING_API_KEY':
     case 'INVALID_API_KEY': return 'set SEARCHCODE_API_KEY';
+    case 'INVALID_REQUEST': return 'check the arguments you passed';
     default: return '';
   }
 }
@@ -80,12 +81,19 @@ async function request(cfg, path, params = {}, { method = 'GET', body, signal, r
   try { payload = text ? JSON.parse(text) : {}; } catch { payload = { raw: text }; }
 
   if (!resp.ok) {
-    throw new ApiError(
-      resp.status,
-      payload.code || `HTTP_${resp.status}`,
-      payload.error || text || resp.statusText,
-      creditsRemaining,
-    );
+    // The gateway speaks two error envelopes: the canonical `api-error.v1`
+    // ({error: {code, message, retryable}, schema_version}) that its middleware applies, and a
+    // flat {error, code} from a few hand-written handlers. Read both, or a coded error arrives
+    // as a bare HTTP status with an unreadable message.
+    const nested = payload.error && typeof payload.error === 'object' ? payload.error : null;
+    const code = nested?.code ?? payload.code ?? `HTTP_${resp.status}`;
+    const message = nested?.message
+      ?? (typeof payload.error === 'string' ? payload.error : null)
+      ?? text
+      ?? resp.statusText;
+    const error = new ApiError(resp.status, code, message, creditsRemaining);
+    if (nested && typeof nested.retryable === 'boolean') error.retryable = nested.retryable;
+    throw error;
   }
   if (creditsRemaining !== null) payload._creditsRemaining = Number(creditsRemaining);
   return payload;

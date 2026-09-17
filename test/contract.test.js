@@ -85,6 +85,42 @@ test('the API key travels as a header, never in the URL', async () => {
   }
 });
 
+test('both gateway error envelopes are parsed', async () => {
+  // The gateway answers with the canonical api-error.v1 envelope from its middleware, and with a
+  // flat {error, code} from a few hand-written handlers. Reading only one loses the code and the
+  // message, which is exactly what the live smoke test caught.
+  const envelopes = [
+    [
+      'api-error.v1',
+      { error: { code: 'INVALID_REQUEST', message: 'name or name_slug is required', retryable: false }, schema_version: 'api-error.v1' },
+      'INVALID_REQUEST',
+      'name or name_slug is required',
+    ],
+    [
+      'flat',
+      { error: 'unknown or revoked API key', code: 'INVALID_API_KEY' },
+      'INVALID_API_KEY',
+      'unknown or revoked API key',
+    ],
+  ];
+  const original = globalThis.fetch;
+  try {
+    for (const [name, body, code, message] of envelopes) {
+      globalThis.fetch = async () => new Response(JSON.stringify(body), { status: 400 });
+      await assert.rejects(
+        () => Api.searchSource({ baseUrl: 'https://example.test', apiKey: 'k' }, { q: 'x' }),
+        (error) => {
+          assert.equal(error.code, code, `${name}: code`);
+          assert.equal(error.message, message, `${name}: message`);
+          return true;
+        },
+      );
+    }
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
 test('a non-2xx becomes an ApiError carrying the gateway code', async () => {
   const original = globalThis.fetch;
   globalThis.fetch = async () =>
