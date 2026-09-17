@@ -1,4 +1,9 @@
 # GENERATED. Publishes @searchcode/core when a version tag is pushed.
+#
+# A tag only reaches this repository from the private source repository, and it only pushes one
+# after the live smoke test has passed against the production API. That smoke test is the gate
+# that proves these clients match the API they describe; the tests below are the offline,
+# structural half. See scripts/smoke-public-clients.mjs in the source repository.
 name: publish
 
 on:
