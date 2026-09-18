@@ -22,10 +22,15 @@ jobs:
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
-      # npm Trusted Publishing: the registry trusts this workflow's OIDC identity, so no token
-      # is stored anywhere. Requires npm 11.5.1+, which is newer than the version bundled with
-      # the Node 22 runner, hence the explicit upgrade.
+      # npm Trusted Publishing authenticates this workflow by its OIDC identity, so no token is
+      # needed. It cannot be used for a package's FIRST publish: a trusted publisher is configured
+      # on the package's settings page, which does not exist until the package has been published
+      # once. NPM_TOKEN covers that first release only; once trusted publishing is registered the
+      # secret is deleted and this falls back to OIDC automatically.
+      # Requires npm 11.5.1+, newer than the version bundled with the Node 22 runner.
       - run: npm install -g npm@latest
       - run: npm install
       - run: npm test
       - run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
